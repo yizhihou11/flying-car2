@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>亿航 EH216-S 无人驾驶载人 eVTOL 全方位安全分析 · 课程作业-2</title>
+<meta name="description" content="结合系统安全工程方法，对亿航智能 EH216-S 无人驾驶载人电动垂直起降航空器进行全方位深度安全分析">
+<link rel="stylesheet" href="https://miaoda.feishu.cn/fonts/css2?family=Noto+Sans+SC:wght@300;400;500;700;900&family=Noto+Serif+SC:wght@600;700;900&display=swap">
+<style>
+  :root{
+    --navy:#16324f; --navy-2:#1f4b73; --accent:#c0392b; --accent-2:#e67e22;
+    --bg:#f5f7fa; --card:#ffffff; --ink:#1e2a36; --muted:#5b6b7b; --line:#dce4ec;
+    --ok:#27ae60; --warn:#f39c12; --high:#c0392b; --low:#2980b9;
+    --shadow:0 6px 22px rgba(22,50,79,.10);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{font-family:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;color:var(--ink);background:var(--bg);line-height:1.75}
+  a{color:var(--navy-2);text-decoration:none}
+  a:hover{text-decoration:underline}
+
+  /* ===== 顶部导航 ===== */
+  header.topbar{position:sticky;top:0;z-index:50;background:var(--navy);color:#fff;box-shadow:var(--shadow)}
+  .topbar-inner{max-width:1100px;margin:0 auto;padding:.7rem 1.2rem;display:flex;align-items:center;gap:1rem;flex-wrap:wrap}
+  .brand{font-weight:700;font-size:.95rem;letter-spacing:.5px}
+  nav.toc{display:flex;gap:.2rem;flex-wrap:wrap;margin-left:auto}
+  nav.toc a{color:#dbe7f1;font-size:.82rem;padding:.3rem .6rem;border-radius:6px}
+  nav.toc a:hover{background:rgba(255,255,255,.12);text-decoration:none}
+
+  /* ===== 封面 ===== */
+  .hero{background:linear-gradient(135deg,var(--navy) 0%,var(--navy-2) 60%,#2c6a96 100%);color:#fff;padding:4rem 1.2rem 3rem}
+  .hero-inner{max-width:1100px;margin:0 auto}
+  .hero .tag{display:inline-block;border:1px solid rgba(255,255,255,.4);border-radius:20px;padding:.25rem .9rem;font-size:.82rem;margin-bottom:1.2rem;color:#eaf3fa}
+  .hero h1{font-family:"Noto Serif SC",serif;font-size:clamp(1.7rem,4vw,2.6rem);line-height:1.35;margin-bottom:1rem;font-weight:900}
+  .hero p.sub{max-width:760px;color:#d7e6f2;font-size:1.02rem}
+  .hero .meta{margin-top:1.6rem;display:flex;gap:2rem;flex-wrap:wrap;font-size:.88rem;color:#cfe0ee}
+  .hero .meta b{display:block;color:#fff;font-weight:500}
+
+  /* ===== 布局 ===== */
+  main{max-width:1100px;margin:0 auto;padding:2.5rem 1.2rem 4rem}
+  section{margin-bottom:3rem;scroll-margin-top:5rem}
+  .sec-head{display:flex;align-items:baseline;gap:.8rem;margin-bottom:1.3rem;border-bottom:2px solid var(--navy);padding-bottom:.5rem}
+  .sec-head .num{font-family:"Noto Serif SC",serif;font-size:1.4rem;font-weight:900;color:var(--accent)}
+  .sec-head h2{font-family:"Noto Serif SC",serif;font-size:1.5rem;color:var(--navy)}
+  h3{font-size:1.1rem;color:var(--navy-2);margin:1.4rem 0 .7rem}
+  p{margin-bottom:.8rem}
+  .lead{color:var(--muted)}
+
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:1.4rem 1.5rem;box-shadow:var(--shadow);margin-bottom:1.2rem}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:1.2rem}
+  .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem}
+  @media(max-width:820px){.grid2,.grid3{grid-template-columns:1fr}}
+
+  /* ===== 表格 ===== */
+  table{width:100%;border-collapse:collapse;font-size:.88rem;background:#fff;border-radius:10px;overflow:hidden}
+  th,td{border:1px solid var(--line);padding:.6rem .75rem;text-align:left;vertical-align:top}
+  th{background:var(--navy);color:#fff;font-weight:500}
+  tr:nth-child(even) td{background:#f8fafc}
+  .tbl-wrap{overflow-x:auto;border-radius:10px;border:1px solid var(--line)}
+
+  /* ===== 参数小标 ===== */
+  .spec{display:grid;grid-template-columns:repeat(3,1fr);gap:.8rem}
+  @media(max-width:820px){.spec{grid-template-columns:repeat(2,1fr)}}
+  .spec .item{background:#f8fafc;border:1px solid var(--line);border-radius:10px;padding:.9rem}
+  .spec .item b{display:block;color:var(--navy);font-size:1.05rem}
+  .spec .item span{font-size:.8rem;color:var(--muted)}
+
+  /* ===== 时间线 ===== */
+  .timeline{border-left:3px solid var(--navy-2);margin-left:.5rem;padding-left:1.5rem}
+  .timeline .ev{position:relative;margin-bottom:1.2rem}
+  .timeline .ev::before{content:"";position:absolute;left:-1.95rem;top:.35rem;width:.85rem;height:.85rem;border-radius:50%;background:var(--accent);border:2px solid #fff;box-shadow:0 0 0 2px var(--navy-2)}
+  .timeline .ev .yr{font-weight:700;color:var(--navy-2)}
+  .timeline .ev .desc{font-size:.9rem;color:var(--muted)}
+
+  /* ===== 风险矩阵 ===== */
+  .matrix{display:grid;grid-template-columns:90px repeat(5,1fr);gap:6px;font-size:.78rem}
+  .matrix .axis{display:flex;align-items:center;justify-content:center;color:var(--muted);font-weight:500}
+  .matrix .cell{border-radius:8px;padding:.5rem .3rem;text-align:center;min-height:54px;display:flex;flex-direction:column;justify-content:center;cursor:default;transition:transform .12s}
+  .matrix .cell:hover{transform:scale(1.05);z-index:2;position:relative}
+  .c-low{background:#d6eaf8;color:#1a5276}
+  .c-mid{background:#fdebd0;color:#9c640c}
+  .c-high{background:#f5b7b1;color:#922b21}
+  .legend{display:flex;gap:1.2rem;flex-wrap:wrap;font-size:.82rem;color:var(--muted);margin-top:.8rem}
+  .legend i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:.35rem}
+
+  /* ===== 标签 ===== */
+  .pill{display:inline-block;font-size:.75rem;padding:.15rem .6rem;border-radius:12px;margin:.1rem .15rem}
+  .p-low{background:#d6eaf8;color:#1a5276}
+  .p-mid{background:#fdebd0;color:#9c640c}
+  .p-high{background:#f5b7b1;color:#922b21}
+
+  /* ===== 流程步骤 ===== */
+  .flow{display:grid;grid-template-columns:repeat(5,1fr);gap:.8rem}
+  @media(max-width:820px){.flow{grid-template-columns:1fr 1fr}}
+  .flow .step{background:#f8fafc;border:1px solid var(--line);border-top:3px solid var(--navy-2);border-radius:10px;padding:.9rem}
+  .flow .step b{color:var(--navy);display:block;margin-bottom:.3rem}
+  .flow .step span{font-size:.8rem;color:var(--muted)}
+
+  ul.bullet{padding-left:1.3rem;margin-bottom:.8rem}
+  ul.bullet li{margin-bottom:.45rem}
+
+  .note{background:#fef6f5;border-left:4px solid var(--accent);border-radius:0 10px 10px 0;padding:.9rem 1.1rem;font-size:.9rem;margin:1rem 0}
+  .note.info{background:#eef6fb;border-left-color:var(--navy-2)}
+
+  /* SVG 示意 */
+  .fig{background:#f8fafc;border:1px solid var(--line);border-radius:12px;padding:1rem;text-align:center}
+  .fig figcaption{font-size:.82rem;color:var(--muted);margin-top:.5rem}
+
+  footer{border-top:1px solid var(--line);padding:2rem 1.2rem;text-align:center;color:var(--muted);font-size:.82rem}
+  .refs{font-size:.85rem}
+  .refs li{margin-bottom:.5rem;color:var(--muted)}
+  .back-top{position:fixed;right:1.2rem;bottom:1.2rem;background:var(--navy);color:#fff;border:none;border-radius:50%;width:42px;height:42px;font-size:1.1rem;cursor:pointer;box-shadow:var(--shadow);opacity:0;pointer-events:none;transition:opacity .2s}
+  .back-top.show{opacity:1;pointer-events:auto}
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-inner">
+    <div class="brand">EH216-S 全方位安全分析</div>
+    <nav class="toc">
+      <a href="#overview">概述</a>
+      <a href="#airworthiness">适航框架</a>
+      <a href="#process">分析流程</a>
+      <a href="#hazards">危险源识别</a>
+      <a href="#risk">风险评估</a>
+      <a href="#design">冗余与防护</a>
+      <a href="#scenarios">失效推演</a>
+      <a href="#residual">残余风险</a>
+      <a href="#refs">参考资料</a>
+    </nav>
+  </div>
+</header>
+
+<div class="hero">
+  <div class="hero-inner">
+    <span class="tag">课程作业-2 · 系统安全工程在飞行汽车中的应用</span>
+    <h1>亿航 EH216-S 无人驾驶载人 eVTOL<br>全方位深度安全分析</h1>
+    <p class="sub">本报告以亿航智能 EH216-S 无人驾驶载人电动垂直起降航空器（eVTOL）为对象，沿"功能危害评估（FHA）→ 故障模式影响分析（FMEA）/ 故障树分析（FTA）→ 系统理论过程分析（STPA）→ 风险矩阵评估 → 安全设计与验证确认"的系统安全工程主线，对其推进、能源、飞控航电、通信链路、运行环境、起降与乘员等各域危险源进行识别、分级与缓解分析，并讨论残余风险与改进方向。</p>
+    <div class="meta">
+      <div><b>分析对象</b>EH216-S 无人驾驶航空器系统（航空器 + 地面控制站 + 通信链路）</div>
+      <div><b>方法依据</b>CAAC 民用无人驾驶航空器系统安全性分析指南</div>
+      <div><b>报告日期</b>2026 年 11 月 25 日</div>
+    </div>
+  </div>
+</div>
+
+<main>
+
+<!-- ============ 1 概述 ============ -->
+<section id="overview">
+  <div class="sec-head"><span class="num">01</span><h2>产品与任务概述</h2></div>
+
+  <div class="card">
+    <p>EH216-S 是亿航智能（EHang, Nasdaq: EH）自主研发的双座、纯电、无人驾驶多旋翼 eVTOL，面向城市空中旅游、城内通勤、应急消防与物流等场景。整机不设机载驾驶员，按预设航线自主飞行，由地面指挥调度系统实施监控与应急介入。完整的无人驾驶航空器系统由三部分组成：<b>无人驾驶航空器本体、地面控制站、通信数据链路</b>——安全分析必须覆盖"机—站—链"三位一体，而不能只看飞行器本体。</p>
+
+    <h3>1.1 主要构型与性能参数</h3>
+    <div class="spec">
+      <div class="item"><b>2 名</b><span>乘员座位数（无机载飞行员）</span></div>
+      <div class="item"><b>16 套</b><span>电机 + 螺旋桨（8 轴 8 对共轴双桨，分布式动力）</span></div>
+      <div class="item"><b>12 组</b><span>动力电池组（相互独立配置）</span></div>
+      <div class="item"><b>3 套</b><span>独立飞行控制系统（余度投票机制）</span></div>
+      <div class="item"><b>620 / 650 kg</b><span>最大起飞重量（公司口径 620 kg；专用条件申报 650 kg）</span></div>
+      <div class="item"><b>130 km/h</b><span>最大飞行速度</span></div>
+      <div class="item"><b>≈30 km</b><span>最大航程</span></div>
+      <div class="item"><b>21–25 min</b><span>续航时间</span></div>
+      <div class="item"><b>5.63 × 5.63 × 1.855 m</b><span>外形尺寸（长 × 宽 × 高）</span></div>
+    </div>
+    <p class="lead" style="margin-top:.8rem;font-size:.85rem">注：高度限制为 AGL 200 m / MSL 3000 m；以上参数依据民航局《EH216-S 型无人驾驶航空器系统专用条件》及公开产品资料整理，具体以适航数据单为准。</p>
+
+    <figure class="fig">
+      <svg viewBox="0 0 560 320" width="100%" style="max-width:560px" role="img" aria-label="EH216-S 八轴十六桨俯视示意">
+        <!-- 中心座舱 -->
+        <ellipse cx="280" cy="160" rx="70" ry="48" fill="#1f4b73"/>
+        <ellipse cx="280" cy="160" rx="44" ry="28" fill="#dbe7f1"/>
+        <text x="280" y="165" text-anchor="middle" font-size="13" fill="#16324f" font-weight="700">座舱 ×2 座</text>
+        <!-- 8 轴臂 + 共轴双桨 -->
+        <g fill="#16324f">
+          <!-- 角度分布 0,45,...315 -->
+          <g id="arms"></g>
+        </g>
+        <script>
+          // 由内联脚本绘制 8 臂与共轴双桨（保持单文件自包含）
+        </script>
+      </svg>
+      <figcaption>图 1-1　EH216-S 分布式多旋翼构型俯视示意（8 轴、每轴上下一对共轴双桨，共 16 桨）</figcaption>
+    </figure>
+  </div>
+
+  <div class="grid2">
+    <div class="card">
+      <h3>1.2 典型任务剖面</h3>
+      <ul class="bullet">
+        <li><b>起飞前：</b>地面站完成系统自检、电池健康与电量核验、气象与航线核查、链路与密钥校验。</li>
+        <li><b>爬升 / 巡航：</b>沿预设航线自主飞行，GNSS 定位 + 多传感器姿态/速度/高度融合，地面站实时监控。</li>
+        <li><b>下降 / 着陆：</b>垂直下降至起降点；出现异常时 Fail-Safe 系统判断续飞或应急就近降落。</li>
+        <li><b>降落后：</b>断电检查、电池检修/快充、飞行数据回传与存档。</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>1.3 安全分析的边界</h3>
+      <ul class="bullet">
+        <li><b>系统边界：</b>本体、地面控制站、通信链路、指挥调度系统及乘员/地面人员。</li>
+        <li><b>环境边界：</b>低空空域、城市/郊野起降场、气象与障碍物（含非合作目标）。</li>
+        <li><b>生命周期：</b>设计、生产、试验试飞、运营、维保与退役各阶段的安全闭环。</li>
+      </ul>
+      <div class="note info">eVTOL 在城市低空、人口上方运行，即使单机失效概率极低，随着架次密度上升，绝对事故起数与对地面第三方的暴露仍需被纳入风险评估。</div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 2 适航与标准 ============ -->
+<section id="airworthiness">
+  <div class="sec-head"><span class="num">02</span><h2>适航审定与标准框架</h2></div>
+  <div class="card">
+    <p>EH216-S 是全球首个取得中国民航局（CAAC）载人无人驾驶 eVTOL 全套适航认可的型号。由于传统有人机标准不能直接套用，CAAC 为其专门颁布了<b>专用条件</b>，并按专项合格审定计划推进符合性验证。理解这套审定框架，是判断其安全水平"由什么背书、覆盖到什么程度"的前提。</p>
+
+    <h3>2.1 审定与运营资质时间线</h3>
+    <div class="timeline">
+      <div class="ev"><div class="yr">2020-12 / 2021-01</div><div class="desc">提交 TC 申请；CAAC 适航司正式受理，为全球首个载人无人机系统 TC 审定项目。</div></div>
+      <div class="ev"><div class="yr">2022-02</div><div class="desc">CAAC 颁布《EH216-S 型无人驾驶航空器系统专用条件》，覆盖结构、动力、电池配电、飞控、链路、乘员保护等专用安全要求。</div></div>
+      <div class="ev"><div class="yr">2023-10-12</div><div class="desc">取得型号合格证（TC，证件号 TC0078A），型号设计被确认符合适用安全标准与适航要求。</div></div>
+      <div class="ev"><div class="yr">2023-12</div><div class="desc">取得标准适航证（AC），成为全球首个获得适航证的 eVTOL 航空器。</div></div>
+      <div class="ev"><div class="yr">2024-03</div><div class="desc">取得生产许可证（PC），具备规模化批量生产与质量一致性保证条件。</div></div>
+      <div class="ev"><div class="yr">2025-03</div><div class="desc">运营航司取得 CAAC 颁发的全国第一批载人类民用无人驾驶航空器运营合格证（OC），进入商业运营阶段。</div></div>
+    </div>
+
+    <h3>2.2 安全合规所依据的方法学</h3>
+    <p>参照 CAAC《民用无人驾驶航空器系统安全性分析指南》，载人无人驾驶航空器系统的安全性论证通常自上而下与自下而上相结合：</p>
+    <div class="flow">
+      <div class="step"><b>功能清单</b><span>梳理本体/子系统/站/链的全部功能与任务剖面</span></div>
+      <div class="step"><b>FHA</b><span>功能危害性评估，划分失效影响等级并导出安全性要求</span></div>
+      <div class="step"><b>FMEA / FTA</b><span>自下而上找单点故障，自上而下建故障树验证顶事件概率</span></div>
+      <div class="step"><b>冗余与验证</b><span>余度设计、软件/硬件符合性试验、试飞验证与确认</span></div>
+      <div class="step"><b>持续安全</b><span>运营监控、事件报告、维保数据反馈与设计迭代</span></div>
+    </div>
+    <div class="note">需要注意：TC/PC/AC/OC 证明的是"在审定状态、审定运行条件下满足既定安全水平"，并不等于零风险；超出包线（气象、载重、环境、改装）运行时，原有安全裕度可能下降。</div>
+  </div>
+</section>
+
+<!-- ============ 3 分析流程 ============ -->
+<section id="process">
+  <div class="sec-head"><span class="num">03</span><h2>系统安全工程分析流程</h2></div>
+  <div class="card">
+    <p>本报告按下列方法链展开。四种方法视角互补：FHA 回答"功能失效会造成什么后果"，FMEA 回答"零部件怎么坏、坏了影响谁"，FTA 回答"顶事件由哪些故障组合引发"，STPA 则从控制与反馈闭环出发，识别"控制不当/反馈缺失"等非硬件故障致险因素。</p>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>方法</th><th>分析视角</th><th>在 EH216-S 上的应用重点</th><th>输出</th></tr></thead>
+        <tbody>
+          <tr><td>FHA 功能危害性评估</td><td>自上而下，按功能与任务剖面</td><td>对推进、能源、飞控、导航、链路、起降等功能的全部/部分丧失、对称/不对称丧失、有无通告等组合失效定级</td><td>失效状态清单、影响等级、定性/定量安全要求</td></tr>
+          <tr><td>FMEA 故障模式影响分析</td><td>自下而上，到航线可更换单元（LRU）</td><td>电机、桨叶、电池组、传感器、飞控计算机、链路模块等故障模式与严酷度、检测手段</td><td>故障模式表、单点故障清单、冗余/检测建议</td></tr>
+          <tr><td>FTA 故障树分析</td><td>自上而下，顶事件分解</td><td>以"空中失控/坠机"为顶事件，分解推进、能源、飞控、链路、环境超限等分支及逻辑门</td><td>最小割集、薄弱环节、概率分配依据</td></tr>
+          <tr><td>STPA 系统理论过程分析</td><td>控制结构与反馈闭环</td><td>分析地面站—链路—飞控—执行机构之间的不安全控制动作与控制缺陷（含人因、软件、信息滞后）</td><td>不安全控制动作清单、约束与过程模型改进项</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 4 危险源识别 ============ -->
+<section id="hazards">
+  <div class="sec-head"><span class="num">04</span><h2>分域危险源识别</h2></div>
+  <p class="lead">下面按系统域梳理典型危险源、失效后果与现有缓解措施；风险等级见第 05 节矩阵。</p>
+
+  <div class="grid2">
+    <div class="card">
+      <h3>4.1 推进与动力系统</h3>
+      <ul class="bullet">
+        <li><b>单桨/单电机失效：</b>单个旋翼推力损失，若控制律能重新分配力矩，机体可保持姿态；共轴对中上下桨同时失效则该轴推力全失。</li>
+        <li><b>不对称推力：</b>相邻一侧多桨失效导致升力/力矩不对称，姿态倾斜，超出可恢复范围将引发坠降。</li>
+        <li><b>桨叶损伤/脱落：</b>鸟击、外物撞击、疲劳裂纹导致桨叶断裂或质量不平衡，引发振动与推力偏心。</li>
+        <li><b>电机/电调过热与退磁：</b>高负荷、散热不足引起功率衰减或卡死。</li>
+      </ul>
+      <p><span class="pill p-mid">分布式动力 + 余度吸收</span></p>
+    </div>
+    <div class="card">
+      <h3>4.2 能源系统（动力电池）</h3>
+      <ul class="bullet">
+        <li><b>电芯热失控：</b>过充/过放、内短路、机械损伤、高温引发电芯过热起火或产气。</li>
+        <li><b>热失控蔓延（TRP）：</b>单组电池故障未被隔离，热量传导至相邻电芯/电池组，形成链式失效。</li>
+        <li><b>电量误判：</b>SOC 估算偏差导致提前亏电；快充循环后容量衰减与一致性劣化。</li>
+        <li><b>高压配电短路：</b>线束磨损、进水、碰撞后绝缘下降引发短路或拉弧。</li>
+      </ul>
+      <p><span class="pill p-high">载人 eVTOL 首要火灾风险</span></p>
+    </div>
+    <div class="card">
+      <h3>4.3 飞控与航电</h3>
+      <ul class="bullet">
+        <li><b>飞控计算机故障：</b>三套余度中一套或多套失效；投票机制在一致性判断失败时可能误裁决。</li>
+        <li><b>传感器失效/矛盾：</b>IMU、气压高度计、GNSS、磁罗盘等漂移、卡死或数据冲突。</li>
+        <li><b>导航退化：</b>GNSS 遮挡/干扰（城市峡谷、多路径、欺骗）导致定位漂移或丢失。</li>
+        <li><b>软件缺陷：</b>控制律、故障检测与重构、自主导航算法中的逻辑错误或边界条件遗漏。</li>
+      </ul>
+      <p><span class="pill p-low">三余度飞控 + 多传感器融合</span></p>
+    </div>
+    <div class="card">
+      <h3>4.4 通信数据链路</h3>
+      <ul class="bullet">
+        <li><b>链路中断/延迟：</b>遮挡、干扰、拥塞导致遥控指令与状态数据丢失或超时。</li>
+        <li><b>恶意入侵/劫持：</b>信号欺骗、未授权接入、数据篡改，企图接管飞行或下发错误指令。</li>
+        <li><b>信息安全：</b>密钥管理、加密实现、地面站与终端自身被攻破的风险。</li>
+        <li><b>时钟/数据不同步：</b>机—站状态不一致导致误判态势。</li>
+      </ul>
+      <p><span class="pill p-mid">链路冗余 + 独立密钥加密 + 自主兜底</span></p>
+    </div>
+    <div class="card">
+      <h3>4.5 气动与低空气象环境</h3>
+      <ul class="bullet">
+        <li><b>风切变/突发阵风/侧风：</b>低空、楼宇与地形诱导气流超出姿态保持能力。</li>
+        <li><b>紊流、低温、结冰、雷雨：</b>改变气动性能、增加载荷或影响电池/传感器工作。</li>
+        <li><b>鸟击与漂浮物：</b>低空鸟类、气球、塑料薄膜等非合作碰撞目标。</li>
+        <li><b>障碍物冲突：</b>楼宇、高压线、塔吊、其他航空器在航线或应急降落区附近。</li>
+      </ul>
+      <p><span class="pill p-mid">航线/气象放行 + 感知避让</span></p>
+    </div>
+    <div class="card">
+      <h3>4.6 起降、地面与乘员保护</h3>
+      <ul class="bullet">
+        <li><b>起降场风险：</b>地面人员误入桨盘范围、场地不平/松软、外来物卷入。</li>
+        <li><b>坠地冲击与坠向第三方：</b>迫降于水面、硬地或人口区域，乘员冲击伤害与地面第三方损害。</li>
+        <li><b>乘员应急：</b>无飞行员情况下乘员缺乏应急处置能力；安全带/座舱约束、出口与逃生、烟雾毒性暴露。</li>
+        <li><b>人因与运行：</b>遥控员监控负荷与误操作、维保差错、改装超包线、疲劳排班。</li>
+      </ul>
+      <p><span class="pill p-high">城市低空运行的社会接受度关键</span></p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 5 风险评估 ============ -->
+<section id="risk">
+  <div class="sec-head"><span class="num">05</span><h2>风险评估与分级</h2></div>
+  <div class="card">
+    <p>采用 <b>严重度（S）× 概率（P）</b> 5×5 风险矩阵进行定性分级。严重度按对乘员/地面第三方的后果划分，概率结合设计冗余、运行统计与包线约束综合判断；下表等级为基于公开资料的工程定性判断，用于识别优先关注项，不代表审定机构的正式定级。</p>
+
+    <div class="matrix" id="matrix">
+      <div class="axis">严重度 ↓ / 概率 →</div>
+      <div class="axis">P1 极少</div><div class="axis">P2 罕见</div><div class="axis">P3 偶尔</div><div class="axis">P4 可能</div><div class="axis">P5 频繁</div>
+      <!-- 行由 JS 生成 -->
+    </div>
+    <div class="legend">
+      <span><i style="background:#d6eaf8"></i>低风险（可接受，常规监控）</span>
+      <span><i style="background:#fdebd0"></i>中风险（需缓解措施与跟踪）</span>
+      <span><i style="background:#f5b7b1"></i>高风险（重点控制/规避，优先投入）</span>
+    </div>
+
+    <h3>5.1 典型危险源定级表</h3>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>编号</th><th>危险源 / 失效场景</th><th>严重度</th><th>概率</th><th>风险等级</th><th>主要缓解</th></tr></thead>
+        <tbody>
+          <tr><td>H1</td><td>单套桨/电机失效</td><td>S3 较重</td><td>P2 罕见</td><td><span class="pill p-low">低</span></td><td>分布式动力、控制律力矩重分配、健康监测</td></tr>
+          <tr><td>H2</td><td>单侧相邻多桨/多轴失效，推力不对称</td><td>S4 重大</td><td>P1 极少</td><td><span class="pill p-mid">中</span></td><td>余度气动裕度、故障重构、应急降落策略</td></tr>
+          <tr><td>H3</td><td>电芯单体热失控</td><td>S4 重大</td><td>P2 罕见</td><td><span class="pill p-mid">中</span></td><td>电芯级测温、电气/热隔离、耐压通风与排烟设计</td></tr>
+          <tr><td>H4</td><td>热失控在电池组/组间蔓延</td><td>S5 灾难性</td><td>P1 极少</td><td><span class="pill p-high">高</span></td><td>阻燃隔热、泄压排气、组间独立、火灾探测与抑制</td></tr>
+          <tr><td>H5</td><td>飞控余度失效或投票误裁决</td><td>S3 较重</td><td>P1 极少</td><td><span class="pill p-low">低</span></td><td>三套独立飞控、传感器冗余、BIT 自检</td></tr>
+          <tr><td>H6</td><td>通信链路中断/超时</td><td>S3 较重</td><td>P2 罕见</td><td><span class="pill p-mid">中</span></td><td>多链路冗余、失联自主悬停/返航/就近降落程序</td></tr>
+          <tr><td>H7</td><td>链路被入侵或指令劫持</td><td>S4 重大</td><td>P1 极少</td><td><span class="pill p-mid">中</span></td><td>独立密钥、加密鉴权、入侵检测、异常指令拒绝</td></tr>
+          <tr><td>H8</td><td>侧风/风切变超出姿态保持包线</td><td>S3 较重</td><td>P2 罕见</td><td><span class="pill p-mid">中</span></td><td>气象放行阈值、风限运行、绕飞/中止程序</td></tr>
+          <tr><td>H9</td><td>鸟击/外物导致桨叶损伤</td><td>S3 较重</td><td>P2 罕见</td><td><span class="pill p-mid">中</span></td><td>航线避让、桨叶损伤容限设计、振动监测</td></tr>
+          <tr><td>H10</td><td>迫降坠向人口稠密区/第三方</td><td>S5 灾难性</td><td>P1 极少</td><td><span class="pill p-high">高</span></td><td>航线避开人群、预设应急降落区、整机降落伞、运行约束</td></tr>
+          <tr><td>H11</td><td>乘员约束不足/舱内烟雾毒性/逃生困难</td><td>S4 重大</td><td>P2 罕见</td><td><span class="pill p-mid">中</span></td><td>座椅安全带、座舱防火与排烟、应急出口与乘客指引</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 6 安全设计 ============ -->
+<section id="design">
+  <div class="sec-head"><span class="num">06</span><h2>安全设计与冗余防护体系</h2></div>
+
+  <div class="card">
+    <h3>6.1 冗余架构总览</h3>
+    <p>EH216-S 将 IT 领域的"全备份"理念引入载人航空器：飞控、传感器、动力、电池等关键环节均采用多套备份，故障时由备份无缝接管。其安全架构可概括为"分布式动力 + 三余度飞控 + 独立电池组 + Fail-Safe 决策 + 地面兜底介入"。</p>
+
+    <figure class="fig">
+      <svg viewBox="0 0 720 300" width="100%" style="max-width:720px" role="img" aria-label="安全冗余与控制链路示意">
+        <!-- 地面站 -->
+        <rect x="20" y="110" width="150" height="80" rx="10" fill="#16324f"/>
+        <text x="95" y="145" text-anchor="middle" fill="#fff" font-size="13" font-weight="700">地面指挥调度站</text>
+        <text x="95" y="168" text-anchor="middle" fill="#dbe7f1" font-size="11">监控 · 调度 · 预警 · 应急介入</text>
+        <!-- 链路 -->
+        <line x1="170" y1="150" x2="270" y2="150" stroke="#1f4b73" stroke-width="3" stroke-dasharray="6 4"/>
+        <text x="220" y="138" text-anchor="middle" font-size="11" fill="#1f4b73">加密冗余链路</text>
+        <!-- 飞控 -->
+        <rect x="270" y="105" width="170" height="90" rx="10" fill="#1f4b73"/>
+        <text x="355" y="135" text-anchor="middle" fill="#fff" font-size="13" font-weight="700">三余度飞控（投票）</text>
+        <text x="355" y="158" text-anchor="middle" fill="#dbe7f1" font-size="11">多传感器融合 · BIT 自检</text>
+        <text x="355" y="176" text-anchor="middle" fill="#dbe7f1" font-size="11">Fail-Safe 健康监测与决策</text>
+        <!-- 执行层 -->
+        <line x1="440" y1="150" x2="500" y2="150" stroke="#1f4b73" stroke-width="3"/>
+        <rect x="500" y="60" width="200" height="60" rx="10" fill="#eaf3fa" stroke="#1f4b73"/>
+        <text x="600" y="85" text-anchor="middle" font-size="12" fill="#16324f" font-weight="700">16 套电机/螺旋桨</text>
+        <text x="600" y="105" text-anchor="middle" font-size="11" fill="#5b6b7b">分布式动力 · 推力重分配</text>
+        <rect x="500" y="120" width="200" height="60" rx="10" fill="#eaf3fa" stroke="#1f4b73"/>
+        <text x="600" y="145" text-anchor="middle" font-size="12" fill="#16324f" font-weight="700">12 组独立动力电池</text>
+        <text x="600" y="165" text-anchor="middle" font-size="11" fill="#5b6b7b">组间独立 · 隔离与监测</text>
+        <rect x="500" y="180" width="200" height="60" rx="10" fill="#fef6f5" stroke="#c0392b"/>
+        <text x="600" y="205" text-anchor="middle" font-size="12" fill="#922b21" font-weight="700">整机降落伞 / 应急降落</text>
+        <text x="600" y="225" text-anchor="middle" font-size="11" fill="#5b6b7b">最终兜底救生手段</text>
+      </svg>
+      <figcaption>图 6-1　"站—链—控—执行—兜底"安全控制链路示意</figcaption>
+    </figure>
+  </div>
+
+  <div class="grid3">
+    <div class="card"><h3>动力冗余</h3><p>8 轴 16 桨分布式布置，单桨失效互不牵连；控制律在故障后重新分配各桨转速与力矩，维持姿态与高度。</p></div>
+    <div class="card"><h3>飞控冗余</h3><p>三套独立飞控计算机协同并按投票机制裁决，配套多套传感器；实时健康监测决定续飞或应急就近降落。</p></div>
+    <div class="card"><h3>能源冗余</h3><p>12 组电池相互独立布置，单组内部部件失效不波及其他组；智能电池系统保障动力稳定与电量可信。</p></div>
+    <div class="card"><h3>通信安全</h3><p>每架航空器配独立密钥、加密传输，抵御恶意入侵；地面站与航空器实时数据交互，突发状况由中心介入施策。</p></div>
+    <div class="card"><h3>应急救生</h3><p>Fail-Safe 系统实时判断机体健康状态，支持自主应急就近降落；配备整机降落伞作为最终兜底手段。</p></div>
+    <div class="card"><h3>运行监控</h3><p>指挥调度系统集监测、调度、管理、预警、集群功能于一体，对机队状态与异常进行集中管控与事后复盘。</p></div>
+  </div>
+
+  <div class="note info">冗余并非越多越好：余度增加带来重量、成本、复杂度与共因失效风险。工程上需在"余度等级—重量代价—失效概率目标"之间权衡，并通过 FTA 验证冗余确实覆盖了关键单点故障。</div>
+</section>
+
+<!-- ============ 7 失效推演 ============ -->
+<section id="scenarios">
+  <div class="sec-head"><span class="num">07</span><h2>典型失效场景推演（FTA / STPA 示例）</h2></div>
+
+  <div class="card">
+    <h3>7.1 故障树示例：顶事件"空中失控坠机"</h3>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>一级分支</th><th>中间事件</th><th>基本事件（示例）</th><th>逻辑关系</th></tr></thead>
+        <tbody>
+          <tr><td rowspan="2">推进失效</td><td>多桨/多轴失效致推力不对称</td><td>单电机卡死、桨叶脱落、电调失效、相邻轴同时故障</td><td rowspan="6">各分支以 OR 连接进入顶事件；分支内单点与冗余失效按 AND/OR 组合，最小割集用于定位最薄弱的故障组合</td></tr>
+          <tr><td>推力整体不足</td><td>功率输出受限、电机大面积过热退磁</td></tr>
+          <tr><td>能源失效</td><td>供电丧失/电池故障蔓延</td><td>电池热失控蔓延、高压配电短路、电量误判亏电</td></tr>
+          <tr><td>飞控/航电失效</td><td>无法保持姿态或导航</td><td>飞控多套同时失效、传感器矛盾未被识别、GNSS 欺骗/丢失、软件边界错误</td></tr>
+          <tr><td>链路失效</td><td>失联且自主兜底未生效</td><td>多链路同时中断、兜底程序缺陷、地面站误介入</td></tr>
+          <tr><td>环境超限</td><td>超出气动/运行包线</td><td>强风切变、结冰、撞鸟/撞障碍物、误入危险气象</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="lead">分析要点：冗余设计把"单套失效"挡在最小割集之外；真正需要重点防范的是<b>共因失效</b>（同一批次缺陷、同一软件版本、同一环境诱因同时打击多套余度）和<b>冗余未能覆盖的组合失效</b>。</p>
+  </div>
+
+  <div class="grid2">
+    <div class="card">
+      <h3>7.2 STPA 不安全控制动作示例</h3>
+      <ul class="bullet">
+        <li><b>未给出应有的控制：</b>检测到电池温度异常但未触发降功率/就近降落。</li>
+        <li><b>给出错误控制：</b>地面站在链路抖动时误下发出错误航点或高度指令。</li>
+        <li><b>控制时机不当：</b>故障重构指令过晚，姿态已超出可恢复范围；或介入过早造成不必要中断。</li>
+        <li><b>反馈缺失/滞后：</b>地面站未及时收到异常状态，过程模型与真实态势不一致。</li>
+        <li><b>人因过程模型偏差：</b>遥控员对多机态势判断失误，或长期低负荷监控导致注意力下降。</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>7.3 三个典型场景的处置链</h3>
+      <ul class="bullet">
+        <li><b>链路中断：</b>本机按预案自主保持/悬停 → 尝试多链路重连 → 超时未恢复则自主返航或就近降落；地面站同步记录并预警。</li>
+        <li><b>单组电池异常：</b>电芯/组级监测告警 → 隔离故障组、其余组继续供电 → 评估电量与位置，优先选择最近安全着陆点。</li>
+        <li><b>单侧多桨失效：</b>飞控识别不对称推力 → 控制律重构补偿 → 若姿态/高度可维持则就近降落，否则启动整机降落伞等兜底手段。</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 8 残余风险 ============ -->
+<section id="residual">
+  <div class="sec-head"><span class="num">08</span><h2>残余风险与改进建议</h2></div>
+  <div class="card">
+    <p>在现有冗余与适航约束下，仍存在难以完全消除的残余风险，需要通过设计增强、运行规则与持续安全数据闭环加以控制。</p>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>残余风险</th><th>成因</th><th>改进建议</th></tr></thead>
+        <tbody>
+          <tr><td>电池热失控及其蔓延</td><td>锂电池化学本质决定，事故后还存在迟发火与二次短路风险</td><td>电芯隔热/阻焰设计、组间物理与热隔离、排气排烟通道、在线热失控早期预警；完善地面应急消防与事故后处置规程</td></tr>
+          <tr><td>共因失效打击多套余度</td><td>同源软硬件缺陷、共同环境诱因同时影响备份通道</td><td>余度通道异构设计、独立供电与布线、软件版本/缺陷隔离、强化共因失效分析与环境应力筛选</td></tr>
+          <tr><td>城市低空第三方风险</td><td>航线下方可能存在人员与建筑，迫降空间受限</td><td>航线与起降点预先避开人群密集区、划设应急降落区、完善低空感知避让与非合作目标探测、运行高度/时段约束</td></tr>
+          <tr><td>信息安全与自主系统信任</td><td>联网节点增多，攻击面扩大；自主决策可解释性不足</td><td>安全认证与密钥生命周期管理、异常指令与入侵检测、关键决策可追溯日志、持续漏洞披露与渗透测试</td></tr>
+          <tr><td>人因与运行差错</td><td>无机载飞行员，安全高度依赖地面流程、维保与人员状态</td><td>遥控员负荷与疲劳管理、标准化检查单与训练、维保差错防错、数据驱动的事件报告与整改闭环</td></tr>
+          <tr><td>超包线运行</td><td>天气、载重、改装等超出审定状态后裕度下降</td><td>明确运行包线与放行标准、改装审批与回归验证、随机状态监测与越界告警</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>8.1 持续安全闭环</h3>
+    <ul class="bullet">
+      <li><b>数据采集：</b>飞行参数、电池健康、故障告警、链路质量与维保记录集中归档。</li>
+      <li><b>分析反馈：</b>统计故障模式与趋势，反哺 FMEA/FTA 更新、设计改进与备件策略。</li>
+      <li><b>审定衔接：</b>设计更改按适航要求评估符合性，重大更改回归验证后再投入运营。</li>
+    </ul>
+  </div>
+
+  <div class="note">本报告为课程作业层面的安全工程分析，所引参数与资质信息来自公开资料；风险分级为定性工程判断，正式安全等级、失效概率指标与符合性结论应以 CAAC 适航审定文件及制造商技术手册为准。</div>
+</section>
+
+<!-- ============ 参考资料 ============ -->
+<section id="refs">
+  <div class="sec-head"><span class="num">09</span><h2>参考资料</h2></div>
+  <div class="card">
+    <ol class="refs">
+      <li>中国民用航空局：《EH216-S 型无人驾驶航空器系统专用条件》（2021/2022）。<br><span style="color:#1f4b73">https://app.caac.gov.cn/PHONE/HDJL/YJZJ/202112/P020211203312757258337.pdf</span></li>
+      <li>中国民用航空局：《民用无人驾驶航空器系统 安全性分析指南（征求意见稿）》（FHA / FMEA 方法要求）。<br><span style="color:#1f4b73">http://www.caac.gov.cn/PHONE/HDJL/YJZJ/202110/P020211029547820699100.pdf</span></li>
+      <li>亿航智能官网：EH216-S 适航审定历程（TC / AC / PC / OC 时间线）。<br><span style="color:#1f4b73">https://www.ehang.com/cn/ehang216s/airworthiness/</span></li>
+      <li>亿航智能官网：EH216-S 产品与安全设计（冗余飞控、Fail-Safe、加密通信、指挥调度）。<br><span style="color:#1f4b73">https://www.ehang.com/cn/ehang216s/</span></li>
+      <li>中国民航局航空器适航审定司：证件公开查询（EH216-S，TC0078A，2023-10-12）。<br><span style="color:#1f4b73">https://amos.caac.gov.cn/#/certificate</span></li>
+      <li>人民网：《"空中的士"飞入现实》（EH216-S 构型、续航、全备份设计与飞行架次报道，2025-05）。<br><span style="color:#1f4b73">https://finance.people.com.cn/n1/2025/0502/c1004-40472462.html</span></li>
+      <li>紫牛新闻：南京无人驾驶"空中的士"报道（620 kg 起飞重量、16 桨、12 组电池、多冗余设计，2025-12）。<br><span style="color:#1f4b73">https://www.yangtse.com/news/jiangsu/nanjing/202512/t20251204_296895.html</span></li>
+      <li>北京理工大学学报：《低空航行风险感知、评估与控制方法研究综述》（低空风险感知与避让方法）。<br><span style="color:#1f4b73">https://journal.bit.edu.cn/zr/article/doi/10.15918/j.tbit1001-0645.2025.166</span></li>
+    </ol>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  课程作业-2 · 针对飞行汽车某技术/产品的全方位安全分析　|　分析对象：亿航 EH216-S 无人驾驶载人 eVTOL　|　2026-11-25
+</footer>
+
+<button class="back-top" id="backTop" aria-label="回到顶部">↑</button>
+
+<script>
+// ===== 风险矩阵生成 =====
+(function(){
+  const S = ['S5 灾难性','S4 重大','S3 较重','S2 较轻','S1 轻微'];
+  const P = ['P1','P2','P3','P4','P5'];
+  // 等级矩阵：低/中/高，行=严重度由高到低
+  const level = [
+    ['中','中','高','高','高'],
+    ['低','中','中','高','高'],
+    ['低','低','中','中','高'],
+    ['低','低','低','中','中'],
+    ['低','低','低','低','中']
+  ];
+  const cls = {'低':'c-low','中':'c-mid','高':'c-high'};
+  const box = document.getElementById('matrix');
+  S.forEach((s,i)=>{
+    const label = document.createElement('div');
+    label.className='axis'; label.textContent=s; box.appendChild(label);
+    P.forEach((p,j)=>{
+      const c=document.createElement('div');
+      const lv=level[i][j];
+      c.className='cell '+cls[lv];
+      c.innerHTML='<b>'+lv+'</b><span>'+p+'</span>';
+      c.title='严重度 '+s+' / 概率 '+p+'：'+lv+'风险';
+      box.appendChild(c);
+    });
+  });
+})();
+
+// ===== 八轴十六桨俯视 SVG 补全 =====
+(function(){
+  const g=document.getElementById('arms');
+  if(!g) return;
+  const cx=280, cy=160, armLen=118;
+  let html='';
+  for(let k=0;k<8;k++){
+    const ang=k*Math.PI/4;
+    const x2=cx+Math.cos(ang)*armLen, y2=cy+Math.sin(ang)*armLen*0.82;
+    const x1=cx+Math.cos(ang)*40,  y1=cy+Math.sin(ang)*32;
+    html+='<line x1="'+x1.toFixed(1)+'" y1="'+y1.toFixed(1)+'" x2="'+x2.toFixed(1)+'" y2="'+y2.toFixed(1)+'" stroke="#16324f" stroke-width="7" stroke-linecap="round"/>';
+    // 共轴双桨（上下两片示意）
+    html+='<ellipse cx="'+x2.toFixed(1)+'" cy="'+y2.toFixed(1)+'" rx="26" ry="10" fill="#1f4b73" transform="rotate('+(ang*180/Math.PI)+' '+x2.toFixed(1)+' '+y2.toFixed(1)+')" opacity="0.9"/>';
+    html+='<ellipse cx="'+x2.toFixed(1)+'" cy="'+y2.toFixed(1)+'" rx="20" ry="7" fill="#dbe7f1" transform="rotate('+(ang*180/Math.PI+90)+' '+x2.toFixed(1)+' '+y2.toFixed(1)+')"/>';
+  }
+  g.innerHTML=html;
+})();
+
+// ===== 回到顶部 =====
+(function(){
+  const btn=document.getElementById('backTop');
+  window.addEventListener('scroll',()=>{
+    btn.classList.toggle('show',window.scrollY>400);
+  });
+  btn.addEventListener('click',()=>window.scrollTo({top:0,behavior:'smooth'}));
+})();
+</script>
+</body>
+</html>
